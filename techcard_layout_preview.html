@@ -1064,6 +1064,8 @@ document.getElementById('mobile-items').addEventListener('input', function(e) {
     renderTotals();
   }
 });
+
+function renderTotals() {
   var el = document.getElementById('totals');
   if (items.length === 0) { el.style.display = 'none'; return; }
   el.style.display = 'flex';
