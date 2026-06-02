@@ -270,16 +270,12 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   .search-input{width:100%}
   .cad-form{padding:12px}
 
-  /* TABELA PRODUTOS — código e botões na mesma linha */
+  /* TABELA PRODUTOS — layout mobile limpo */
   .cad-list thead{display:none}
   .cad-list tr{display:block;padding:10px 14px;border-bottom:1px solid var(--border)}
   .cad-list tr:last-child{border-bottom:none}
-  .cad-list td{display:block;padding:2px 0}
+  .cad-list td{display:block;padding:2px 0;border:none}
   .cad-list td.td-tight{width:auto}
-  /* Linha do código + botões alinhados */
-  .cad-list tr td:first-child{display:flex;justify-content:space-between;align-items:center}
-  .cad-list tr td:last-child{display:none} /* esconde td de botões separado */
-  /* Injeta botões dentro da primeira célula via CSS não é possível — usamos JS abaixo */
 
   /* CLIENTES cards — 1 coluna */
   .cli-cards-grid{grid-template-columns:1fr}
@@ -428,6 +424,18 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
 
   <!-- TOTAIS -->
   <div class="totals" id="totals" style="display:none"></div>
+
+  <!-- BANNER EDIÇÃO DE COTAÇÃO -->
+  <div id="edit-cot-banner" style="display:none;background:var(--warn-bg,#fffbeb);border:1.5px solid var(--warn,#d97706);border-radius:var(--r);padding:12px 16px;gap:12px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:var(--warn,#d97706)">✏️ Editando cotação: <span id="edit-cot-nome-lbl"></span></div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:2px">Faça as alterações nos itens acima e salve quando terminar.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-cancel" id="btn-cancel-edit-cot">Cancelar edição</button>
+      <button class="btn-ok" id="btn-save-edit-cot" style="background:var(--warn,#d97706)">💾 Salvar Alterações</button>
+    </div>
+  </div>
 
   <!-- SALVAR COTAÇÃO -->
   <div id="salvar-cotacao-bar" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
@@ -761,14 +769,23 @@ function getBoletos() {
 }
 
 function calcTC(compra, venda, qty) {
-  var boletos   = getBoletos();
   var vendaTot  = venda * qty;
   var compraTot = compra * qty;
   var imposto   = vendaTot * 0.04;
-  var boletoCust = boletos * 4.50;
-  var lucro     = vendaTot - imposto - compraTot - boletoCust;
+  // Boleto NÃO é por item — é calculado apenas no total geral
+  var lucro     = vendaTot - imposto - compraTot;
   var margem    = vendaTot > 0 ? lucro / vendaTot * 100 : 0;
-  return { vendaTot, compraTot, imposto, boletoCust, lucro, margem };
+  return { vendaTot, compraTot, imposto, boletoCust: 0, lucro, margem };
+}
+
+function calcTCTotal(itens) {
+  // Aplica custo de boleto uma única vez sobre o total
+  var boletos    = getBoletos();
+  var boletoCust = boletos * 4.50;
+  var totalLucro = itens.reduce(function(s, it) {
+    return s + calcTC(it.compra, it.venda, it.qty).lucro;
+  }, 0);
+  return totalLucro - boletoCust;
 }
 
 function calcVD(compra, venda, qty, comissaoUnit) {
@@ -850,14 +867,19 @@ function renderTotals() {
   if (items.length === 0) { el.style.display = 'none'; return; }
   el.style.display = 'flex';
 
-  var tVenda = 0, tCompra = 0, tTc = 0, tVd = 0;
+  var tVenda = 0, tCompra = 0, tTcSemBoleto = 0, tVd = 0;
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
-    tVenda  += it.venda  * it.qty;
-    tCompra += it.compra * it.qty;
-    tTc     += calcTC(it.compra, it.venda, it.qty).lucro;
-    tVd     += calcVD(it.compra, it.venda, it.qty, it.comissao || 0).lucro;
+    tVenda         += it.venda  * it.qty;
+    tCompra        += it.compra * it.qty;
+    tTcSemBoleto   += calcTC(it.compra, it.venda, it.qty).lucro;
+    tVd            += calcVD(it.compra, it.venda, it.qty, it.comissao || 0).lucro;
   }
+
+  // Boleto abatido UMA VEZ do total
+  var boletoCust = getBoletos() * 4.50;
+  var tTc = tTcSemBoleto - boletoCust;
+
   var mTc = tVenda > 0 ? tTc / tVenda * 100 : 0;
   var mVd = tVenda > 0 ? tVd / tVenda * 100 : 0;
 
@@ -866,9 +888,10 @@ function renderTotals() {
   h += '<div class="tot-sep"></div>';
   h += '<div class="tot"><div class="tot-lbl">Total Compra</div><div class="tot-val">R$ ' + fmt(tCompra) + '</div></div>';
   if (modeTc) {
+    var boletoStr = boletoCust > 0 ? ' <span style="font-size:11px;color:var(--text3);font-weight:400">(' + getBoletos() + ' boleto(s) – R$ ' + fmt(boletoCust) + ')</span>' : '';
     var cls = tTc >= 0 ? 'ok' : 'err';
     h += '<div class="tot-sep"></div>';
-    h += '<div class="tot"><div class="tot-lbl">🏢 Lucro — Techcard</div><div class="tot-val tc ' + cls + '">R$ ' + fmt(tTc) + ' <span style="font-size:13px;font-weight:500">(' + mTc.toFixed(1) + '%)</span></div></div>';
+    h += '<div class="tot"><div class="tot-lbl">🏢 Lucro — Techcard' + boletoStr + '</div><div class="tot-val tc ' + cls + '">R$ ' + fmt(tTc) + ' <span style="font-size:13px;font-weight:500">(' + mTc.toFixed(1) + '%)</span></div></div>';
   }
   if (modeVd) {
     var cls2 = tVd >= 0 ? 'ok' : 'err';
@@ -891,11 +914,12 @@ function updatePreview() {
   var html = '';
   if (modeTc) {
     var r = calcTC(compra, venda, qty);
+    var boletoCust = getBoletos() * 4.50;
     var cls = r.lucro >= 0 ? 'pos' : 'neg';
     html += '<div class="prev-block">';
     html += '<div class="prev-title tc">🏢 Techcard</div>';
-    html += '<div class="prev-detail">Imposto 4%: R$ ' + fmt(r.imposto) + ' &nbsp;|&nbsp; Boletos: R$ ' + fmt(r.boletoCust) + '</div>';
-    html += '<div class="prev-lucro ' + cls + '">Lucro: R$ ' + fmt(r.lucro) + ' (' + r.margem.toFixed(1) + '%)</div>';
+    html += '<div class="prev-detail">Imposto 4%: R$ ' + fmt(r.imposto) + (boletoCust > 0 ? ' &nbsp;|&nbsp; Boleto(s): – R$ ' + fmt(boletoCust) + ' <span style="font-size:10px">(total)</span>' : ' &nbsp;|&nbsp; PIX') + '</div>';
+    html += '<div class="prev-lucro ' + cls + '">Lucro item: R$ ' + fmt(r.lucro) + ' (' + r.margem.toFixed(1) + '%)</div>';
     html += '</div>';
   }
   if (modeVd) {
@@ -1178,22 +1202,28 @@ function renderProdutos() {
     return;
   }
   var isMobile = window.innerWidth <= 760;
-  tb.innerHTML = list.map(function(p) {
-    if (isMobile) {
-      return '<tr>' +
-        '<td colspan="4" style="padding:10px 14px">' +
+  if (isMobile) {
+    // No mobile usa divs em vez de tabela
+    tb.innerHTML = list.map(function(p) {
+      return '<tr><td colspan="4" style="padding:0;border:none">' +
+        '<div style="padding:12px 14px;border-bottom:1px solid var(--border)">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
             '<span class="list-code">' + esc(p.code||'') + '</span>' +
             '<div style="display:flex;gap:6px">' +
-              '<button class="card-del" style="width:30px;height:30px;background:var(--accent-bg);color:var(--blue);border-color:rgba(37,99,200,.2)" data-doc-id="' + p._docId + '" data-tipo="edit-produto" title="Editar">✎</button>' +
-              '<button class="card-del" style="width:30px;height:30px;" data-doc-id="' + p._docId + '" data-tipo="produto" title="Excluir">✕</button>' +
+              '<button class="card-del" style="width:32px;height:32px;background:var(--accent-bg);color:var(--blue);border-color:rgba(37,99,200,.2);font-size:14px" data-doc-id="' + p._docId + '" data-tipo="edit-produto" title="Editar">✎</button>' +
+              '<button class="card-del" style="width:32px;height:32px;font-size:14px" data-doc-id="' + p._docId + '" data-tipo="produto" title="Excluir">✕</button>' +
             '</div>' +
           '</div>' +
-          '<div style="font-size:11px;color:var(--text3);margin-bottom:2px">' + esc(p.cat||'') + '</div>' +
-          '<div class="list-name">' + esc(p.desc||'') + '</div>' +
-        '</td>' +
-      '</tr>';
-    }
+          '<div style="font-size:11px;color:var(--text3);margin-bottom:3px">' + esc(p.cat||'') + '</div>' +
+          '<div style="font-size:13px;color:var(--text)">' + esc(p.desc||'') + '</div>' +
+        '</div>' +
+      '</td></tr>';
+    }).join('');
+    return;
+  }
+
+  // Desktop
+  tb.innerHTML = list.map(function(p) {
     return '<tr>' +
       '<td class="td-tight"><span class="list-code">' + esc(p.code||'') + '</span></td>' +
       '<td class="td-tight"><span class="list-cat">' + esc(p.cat||'') + '</span></td>' +
@@ -1673,9 +1703,10 @@ function renderCotacoes() {
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--blue)">' + fmtBRL(total) + '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:3px">' + itensHtml + '</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
         '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--navy)" data-cot-id="' + c._docId + '" data-cot-action="substituir">↩ Substituir atual</button>' +
         '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--blue-lt)||var(--blue);opacity:.85" data-cot-id="' + c._docId + '" data-cot-action="adicionar">＋ Adicionar aos itens</button>' +
+        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--warn,#d97706)" data-cot-id="' + c._docId + '" data-cot-action="editar">✏️ Editar</button>' +
         '<button class="card-del" style="margin-left:auto" data-cot-id="' + c._docId + '" data-cot-action="excluir" title="Excluir">✕</button>' +
       '</div>' +
     '</div>';
@@ -1695,6 +1726,48 @@ document.getElementById('cot-grid').addEventListener('click', function(e) {
     if (!confirm('Excluir a cotação "' + cot.nome + '"?')) return;
     window.fbDeleteDoc(window.fbDoc(window.fbDb, 'cotacoes', docId))
       .catch(function(e){ alert('Erro: ' + e.message); });
+    return;
+  }
+
+  if (action === 'editar') {
+    // Carrega itens na formação de preço
+    items = (cot.itens || []).map(function(it) {
+      return Object.assign({ id: nextId++ }, it);
+    });
+    if (cot.modeTc !== undefined) {
+      modeTc = cot.modeTc;
+      document.getElementById('chip-tc').classList.toggle('on', modeTc);
+      document.getElementById('ctrl-boleto').style.display = modeTc ? '' : 'none';
+    }
+    if (cot.modeVd !== undefined) {
+      modeVd = cot.modeVd;
+      document.getElementById('chip-vd').classList.toggle('on', modeVd);
+      document.getElementById('ctrl-vd').style.display = modeVd ? '' : 'none';
+    }
+    if (cot.boletos !== undefined) {
+      document.getElementById('n-boletos').value = cot.boletos;
+      var n2 = parseInt(cot.boletos) || 0;
+      var lbl2 = document.getElementById('boleto-label');
+      lbl2.innerHTML = n2 === 0
+        ? '<span style="color:var(--ok);font-weight:600">✓ PIX — sem custo de boleto</span>'
+        : '× R$ 4,50 = <strong>R$ ' + fmt(n2*4.5) + '</strong>';
+    }
+    render();
+
+    // Mostra banner de edição, esconde botão salvar nova
+    document.getElementById('salvar-cotacao-bar').style.display = 'none';
+    var banner = document.getElementById('edit-cot-banner');
+    banner.style.display = 'flex';
+    banner._docId   = docId;
+    banner._cotNome = cot.nome;
+    banner._cotCli  = cot.cliente || '';
+    document.getElementById('edit-cot-nome-lbl').textContent = cot.nome;
+
+    // Vai para aba formação de preços
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelector('[data-page="calc"]').classList.add('active');
+    document.getElementById('page-calc').classList.add('active');
     return;
   }
 
@@ -1738,7 +1811,40 @@ document.getElementById('cot-grid').addEventListener('click', function(e) {
   document.getElementById('page-calc').classList.add('active');
 });
 
-// Abrir modal salvar cotação
+// Cancelar edição de cotação
+document.getElementById('btn-cancel-edit-cot').addEventListener('click', function() {
+  document.getElementById('edit-cot-banner').style.display = 'none';
+  items = [];
+  render();
+});
+
+// Salvar alterações da cotação editada
+document.getElementById('btn-save-edit-cot').addEventListener('click', function() {
+  var banner = document.getElementById('edit-cot-banner');
+  var docId  = banner._docId;
+
+  // Abre modal para confirmar nome e cliente
+  var sel = document.getElementById('cot-cliente');
+  sel.innerHTML = '<option value="">Sem cliente associado</option>';
+  clientes.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.nome; opt.textContent = c.nome;
+    if (c.nome === banner._cotCli) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('cot-nome').value = banner._cotNome;
+  var total = items.reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
+  document.getElementById('cot-resumo').textContent = items.length + ' item(ns) · Total: ' + fmtBRL(total);
+
+  // Marca modal como modo edição
+  var modal = document.getElementById('cot-modal');
+  modal.style.display = 'flex';
+  modal._editDocId = docId;
+  modal._isEdit    = true;
+  document.querySelector('#cot-modal .btn-ok').textContent = '💾 Salvar Alterações';
+});
+
+// Abrir modal salvar cotação (nova)
 document.getElementById('btn-salvar-cotacao').addEventListener('click', function() {
   // Popula select de clientes
   var sel = document.getElementById('cot-cliente');
@@ -1759,10 +1865,19 @@ document.getElementById('btn-salvar-cotacao').addEventListener('click', function
 });
 
 document.getElementById('cancel-cot-modal').addEventListener('click', function() {
-  document.getElementById('cot-modal').style.display = 'none';
+  var modal = document.getElementById('cot-modal');
+  modal.style.display = 'none';
+  modal._isEdit = false;
+  modal._editDocId = null;
+  document.querySelector('#cot-modal .btn-ok').textContent = '💾 Salvar';
 });
 document.getElementById('cot-modal').addEventListener('click', function(e) {
-  if (e.target === this) this.style.display = 'none';
+  if (e.target === this) {
+    this.style.display = 'none';
+    this._isEdit = false;
+    this._editDocId = null;
+    document.querySelector('#cot-modal .btn-ok').textContent = '💾 Salvar';
+  }
 });
 
 document.getElementById('confirm-cot-modal').addEventListener('click', function() {
@@ -1770,11 +1885,15 @@ document.getElementById('confirm-cot-modal').addEventListener('click', function(
   var cliente = document.getElementById('cot-cliente').value;
   if (!nome) { alert('Digite um nome para a cotação.'); return; }
 
-  var hoje  = new Date();
-  var dd    = String(hoje.getDate()).padStart(2,'0');
-  var mm    = String(hoje.getMonth()+1).padStart(2,'0');
-  var aa    = String(hoje.getFullYear()).slice(-2);
+  var hoje    = new Date();
+  var dd      = String(hoje.getDate()).padStart(2,'0');
+  var mm      = String(hoje.getMonth()+1).padStart(2,'0');
+  var aa      = String(hoje.getFullYear()).slice(-2);
   var dataStr = dd + '/' + mm + '/' + aa;
+
+  var modal   = document.getElementById('cot-modal');
+  var isEdit  = modal._isEdit;
+  var editId  = modal._editDocId;
 
   var payload = {
     nome:      nome,
@@ -1789,14 +1908,27 @@ document.getElementById('confirm-cot-modal').addEventListener('click', function(
     })
   };
 
-  window.fbAddDoc(window.fbCollection(window.fbDb, 'cotacoes'), payload)
+  var promise = isEdit && editId
+    ? window.fbUpdateDoc(window.fbDoc(window.fbDb, 'cotacoes', editId), payload)
+    : window.fbAddDoc(window.fbCollection(window.fbDb, 'cotacoes'), payload);
+
+  promise
     .then(function() {
-      document.getElementById('cot-modal').style.display = 'none';
-      // Feedback
-      var btn = document.getElementById('btn-salvar-cotacao');
-      var orig = btn.innerHTML;
-      btn.innerHTML = '✓ Salvo!';
-      setTimeout(function(){ btn.innerHTML = orig; }, 1800);
+      modal.style.display = 'none';
+      modal._isEdit    = false;
+      modal._editDocId = null;
+      document.querySelector('#cot-modal .btn-ok').textContent = '💾 Salvar';
+      document.getElementById('edit-cot-banner').style.display = 'none';
+
+      if (isEdit) {
+        items = [];
+        render();
+      } else {
+        var btn = document.getElementById('btn-salvar-cotacao');
+        var orig = btn.innerHTML;
+        btn.innerHTML = '✓ Salvo!';
+        setTimeout(function(){ btn.innerHTML = orig; }, 1800);
+      }
     })
     .catch(function(e){ alert('Erro ao salvar: ' + e.message); });
 });
