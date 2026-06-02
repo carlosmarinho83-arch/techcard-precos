@@ -1650,22 +1650,23 @@ function renderCotacoes() {
   }
   grid.innerHTML = list.map(function(c) {
     var data = c.data || '';
-    var itensHtml = '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
-      (c.itens || []).map(function(it, i) {
-        return '<tr>' +
-          '<td style="color:var(--text3);padding:2px 0;white-space:nowrap;padding-right:8px;vertical-align:top">' + (i+1) + '.</td>' +
-          '<td style="color:var(--text2);padding:2px 0;width:100%">' + esc(it.desc) + ' × ' + it.qty + '</td>' +
-          '<td style="color:var(--text2);padding:2px 0;text-align:right;white-space:nowrap;font-family:\'JetBrains Mono\',monospace;padding-left:10px">' + fmtBRL(it.venda) + '</td>' +
-        '</tr>';
-      }).join('') +
-    '</table>';
+    // Garante formato DD/MM/AA
+    var itensHtml = (c.itens || []).map(function(it, i) {
+      return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-size:12.5px;color:var(--text2)">' + (i+1) + '. ' + esc(it.desc) + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">' +
+          '<span style="font-size:11.5px;color:var(--text3)">× ' + it.qty + '</span>' +
+          '<span style="font-size:12px;font-family:\'JetBrains Mono\',monospace;color:var(--text2)">' + fmtBRL(it.venda) + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
     var total = (c.itens||[]).reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
     return '<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh1);display:flex;flex-direction:column;gap:10px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
         '<div>' +
           '<div style="font-size:14px;font-weight:700;color:var(--text)">' + esc(c.nome||'Sem nome') + '</div>' +
           '<div style="font-size:11.5px;color:var(--text3);margin-top:2px">' +
-            (c.cliente ? '👤 ' + esc(c.cliente) + ' &nbsp;·&nbsp; ' : '') +
+            (c.cliente ? '👤 ' + esc(c.cliente) + ' · ' : '') +
             esc(data) +
           '</div>' +
         '</div>' +
@@ -1770,7 +1771,10 @@ document.getElementById('confirm-cot-modal').addEventListener('click', function(
   if (!nome) { alert('Digite um nome para a cotação.'); return; }
 
   var hoje  = new Date();
-  var dataStr = String(hoje.getDate()).padStart(2,'0') + '/' + String(hoje.getMonth()+1).padStart(2,'0') + '/' + String(hoje.getFullYear()).slice(-2);
+  var dd    = String(hoje.getDate()).padStart(2,'0');
+  var mm    = String(hoje.getMonth()+1).padStart(2,'0');
+  var aa    = String(hoje.getFullYear()).slice(-2);
+  var dataStr = dd + '/' + mm + '/' + aa;
 
   var payload = {
     nome:      nome,
