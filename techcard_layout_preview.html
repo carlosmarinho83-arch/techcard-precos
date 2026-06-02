@@ -8,7 +8,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAb8_drWLchWyEsY5cSfFiz6NsUdxBa56Q",
@@ -29,6 +29,7 @@
   window.fbDeleteDoc   = deleteDoc;
   window.fbDoc         = doc;
   window.fbOnSnapshot  = onSnapshot;
+  window.fbUpdateDoc   = updateDoc;
   window.fbReady       = true;
 
   // Sinaliza que Firebase está pronto
@@ -219,10 +220,90 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
 
 @media(max-width:760px){
-  .wrap,.cad-wrap{padding:12px}
-  .frow{grid-template-columns:1fr 1fr !important}
-  .tabs{padding:0 8px;overflow-x:auto}
-  .tab{padding:0 12px;font-size:12px}
+  /* HEADER */
+  header{padding:0 14px;height:48px}
+  .logo-sep,.logo-sub{display:none}
+  .logo-name{font-size:16px}
+  .theme-btn span{display:none}
+  #fb-status{display:none}
+
+  /* TABS — scroll horizontal, ícones maiores */
+  .tabs{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:0 14px;font-size:12px;height:42px;gap:5px;white-space:nowrap}
+  .tab-icon{font-size:18px}
+
+  /* CONTAINER */
+  .wrap,.cad-wrap{padding:12px;gap:12px}
+
+  /* CONTROLES — empilha verticalmente */
+  .controls{flex-direction:column;gap:10px}
+  .ctrl{padding:12px 14px}
+  .chips{flex-wrap:wrap;gap:8px}
+  .chip{font-size:12px;padding:8px 12px}
+  .subchips{flex-wrap:wrap}
+  .boleto-row{flex-wrap:wrap;gap:8px}
+  .boleto-row span{font-size:12px}
+
+  /* FORMULÁRIO ADICIONAR ITEM */
+  .frow{grid-template-columns:1fr !important}
+  .form-box{padding:14px}
+  .btn-add{padding:11px 16px;font-size:13px}
+  .add-btn{padding:11px 16px;font-size:13px;width:100%;justify-content:center}
+
+  /* TABELA — scroll horizontal */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px;font-size:12px}
+  thead th{padding:8px 10px;font-size:9px}
+  td{padding:9px 10px}
+  .inline-qty{width:40px !important}
+  .inline-money{width:90px !important;font-size:11px !important}
+
+  /* TOTAIS */
+  .totals{flex-direction:column;gap:12px;padding:12px 14px}
+  .tot-sep{width:100%;height:1px}
+  .tot-val{font-size:16px}
+
+  /* CADASTROS */
+  .cad-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .cad-header > div:last-child{width:100%}
+  .search-input{width:100%}
+  .cad-form{padding:12px}
+
+  /* TABELA PRODUTOS — mais compacta */
+  .cad-list thead{display:none}
+  .cad-list td{display:block;padding:4px 12px}
+  .cad-list tr{display:block;padding:10px 0;border-bottom:1px solid var(--border)}
+  .cad-list tr:last-child{border-bottom:none}
+  .cad-list td.td-tight{width:auto;padding-right:12px}
+  .cad-list td[style*="width:32px"]{padding-top:0}
+
+  /* CLIENTES cards — 1 coluna */
+  .cli-cards-grid{grid-template-columns:1fr}
+
+  /* PROPOSTA */
+  .prop-conds .frow{grid-template-columns:1fr 1fr !important}
+  #pi-produtos-check{max-height:160px}
+
+  /* INPUTS — maiores para touch */
+  input[type="text"],input[type="number"],select{
+    padding:11px 12px;
+    font-size:15px;
+    border-radius:8px;
+  }
+  .pfx-wrap input{padding-left:28px}
+
+  /* BOTÕES — altura adequada para touch */
+  .btn-ok,.btn-cancel,.btn-confirm,.btn-add,.add-btn{
+    min-height:44px;
+    font-size:14px;
+  }
+  .del-btn,.card-del,.cli-card-del,.icon-btn{
+    width:32px;height:32px;font-size:14px;
+  }
+
+  /* PREVIEW CÁLCULO */
+  .calc-preview{flex-direction:column;gap:12px}
 }
 </style>
 </head>
@@ -245,6 +326,7 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
 <div class="tabs">
   <div class="tab active" data-page="calc">🧮 Formação de Preços</div>
   <div class="tab" data-page="proposta">📄 Proposta</div>
+  <div class="tab" data-page="cotacoes">💾 Cotações</div>
   <div class="tab" data-page="produtos">📦 Produtos</div>
   <div class="tab" data-page="clientes">👤 Clientes</div>
 </div>
@@ -344,8 +426,52 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   <!-- TOTAIS -->
   <div class="totals" id="totals" style="display:none"></div>
 
+  <!-- SALVAR COTAÇÃO -->
+  <div id="salvar-cotacao-bar" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
+    <button class="add-btn" id="btn-salvar-cotacao" style="background:var(--ok);white-space:nowrap">
+      💾 Salvar Cotação
+    </button>
+    <span style="font-size:12px;color:var(--text3)">Salva os itens atuais para consultar e reutilizar depois</span>
+  </div>
+
 </div>
 </div><!-- /page-calc -->
+
+<!-- PAGE: COTAÇÕES -->
+<div class="page" id="page-cotacoes">
+  <div class="cad-wrap">
+
+    <div class="cad-header">
+      <div class="cad-title">Cotações Salvas <span id="cot-count" style="font-size:13px;font-weight:400;color:var(--text3)"></span></div>
+      <input class="search-input" id="cot-search" placeholder="Buscar cotação..." oninput="renderCotacoes()">
+    </div>
+
+    <div id="cot-grid" style="display:flex;flex-direction:column;gap:10px"></div>
+
+  </div>
+</div><!-- /page-cotacoes -->
+
+<!-- MODAL SALVAR COTAÇÃO -->
+<div id="cot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh)">
+    <div style="font-size:15px;font-weight:700;color:var(--text)">💾 Salvar Cotação</div>
+    <div class="field">
+      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3)">Nome da Cotação</label>
+      <input type="text" id="cot-nome" placeholder="Ex: Computador DRN com monitor">
+    </div>
+    <div>
+      <div class="flabel">Cliente (opcional)</div>
+      <select id="cot-cliente">
+        <option value="">Sem cliente associado</option>
+      </select>
+    </div>
+    <div style="font-size:12px;color:var(--text3)" id="cot-resumo"></div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="cancel-cot-modal">Cancelar</button>
+      <button class="btn-ok" id="confirm-cot-modal" style="background:var(--ok)">💾 Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- PAGE: PROPOSTA -->
 <div class="page" id="page-proposta">
@@ -475,6 +601,8 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
             <option>Monitor</option>
             <option>Periférico</option>
             <option>Impressora</option>
+            <option>Cartuchos</option>
+            <option>Peças</option>
             <option>Software</option>
             <option>Rede</option>
             <option>Outro</option>
@@ -493,6 +621,43 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
         <thead><tr><th>Código</th><th>Categoria</th><th>Descrição</th><th></th></tr></thead>
         <tbody id="prod-grid"></tbody>
       </table>
+    </div>
+
+    <!-- Modal editar produto -->
+    <div id="prod-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:16px">
+      <div style="background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh)">
+        <div style="font-size:15px;font-weight:700;color:var(--text)">✏️ Editar Produto</div>
+        <div class="frow" style="grid-template-columns:130px 1fr">
+          <div>
+            <div class="flabel">Código</div>
+            <input type="text" id="pe-code" placeholder="LEN-50S-I5">
+          </div>
+          <div>
+            <div class="flabel">Descrição</div>
+            <input type="text" id="pe-desc" placeholder="Nome do produto">
+          </div>
+        </div>
+        <div>
+          <div class="flabel">Categoria</div>
+          <select id="pe-cat">
+            <option value="">Selecionar...</option>
+            <option>Computador</option>
+            <option>Notebook</option>
+            <option>Monitor</option>
+            <option>Periférico</option>
+            <option>Impressora</option>
+            <option>Cartuchos</option>
+            <option>Peças</option>
+            <option>Software</option>
+            <option>Rede</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" id="cancel-prod-edit">Cancelar</button>
+          <button class="btn-ok" id="confirm-prod-edit">✓ Salvar Alterações</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1014,7 +1179,10 @@ function renderProdutos() {
       '<td class="td-tight"><span class="list-code">' + esc(p.code||'') + '</span></td>' +
       '<td class="td-tight"><span class="list-cat">' + esc(p.cat||'') + '</span></td>' +
       '<td><div class="list-name">' + esc(p.desc||'') + '</div></td>' +
-      '<td style="width:32px"><button class="card-del" data-doc-id="' + p._docId + '" data-tipo="produto">✕</button></td>' +
+      '<td style="width:60px;white-space:nowrap">' +
+        '<button class="card-del" style="background:var(--accent-bg);color:var(--blue);border-color:rgba(37,99,200,.2);margin-right:4px" data-doc-id="' + p._docId + '" data-tipo="edit-produto" title="Editar">✎</button>' +
+        '<button class="card-del" data-doc-id="' + p._docId + '" data-tipo="produto" title="Excluir">✕</button>' +
+      '</td>' +
     '</tr>';
   }).join('');
 }
@@ -1070,14 +1238,71 @@ document.getElementById('confirm-prod').addEventListener('click', function() {
     .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
 });
 
-// Excluir produto
+// Editar/Excluir produto
 document.getElementById('prod-grid').addEventListener('click', function(e) {
-  var btn = e.target.closest('[data-tipo="produto"]');
+  var btn = e.target.closest('[data-tipo]');
   if (!btn) return;
-  if (!confirm('Remover este produto?')) return;
   var docId = btn.getAttribute('data-doc-id');
-  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'produtos', docId))
-    .catch(function(e) { alert('Erro ao remover: ' + e.message); });
+  var tipo  = btn.getAttribute('data-tipo');
+
+  if (tipo === 'produto') {
+    if (!confirm('Remover este produto?')) return;
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'produtos', docId))
+      .catch(function(e) { alert('Erro ao remover: ' + e.message); });
+  }
+
+  if (tipo === 'edit-produto') {
+    var prod = produtos.find(function(p){ return p._docId === docId; });
+    if (!prod) return;
+    document.getElementById('pe-code').value = prod.code || '';
+    document.getElementById('pe-desc').value = prod.desc || '';
+    document.getElementById('pe-cat').value  = prod.cat  || '';
+    var overlay = document.getElementById('prod-edit-overlay');
+    overlay.style.display = 'flex';
+    overlay._docId = docId;
+  }
+});
+
+// Fechar modal editar
+document.getElementById('cancel-prod-edit').addEventListener('click', function() {
+  document.getElementById('prod-edit-overlay').style.display = 'none';
+});
+document.getElementById('prod-edit-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// Salvar edição
+document.getElementById('confirm-prod-edit').addEventListener('click', function() {
+  var overlay = document.getElementById('prod-edit-overlay');
+  var docId   = overlay._docId;
+  var code    = document.getElementById('pe-code').value.trim().toUpperCase();
+  var desc    = document.getElementById('pe-desc').value.trim();
+  var cat     = document.getElementById('pe-cat').value;
+  if (!code || !desc) { alert('Preencha o código e a descrição.'); return; }
+  if (!cat) { alert('Selecione uma categoria.'); return; }
+
+  // Verifica duplicata (ignora o próprio produto sendo editado)
+  var dup = produtos.find(function(p){ return p.code === code && p._docId !== docId; });
+  if (dup) { alert('Já existe outro produto com esse código.'); return; }
+
+  var { setDoc } = window.fbSetDoc
+    ? { setDoc: window.fbSetDoc }
+    : {};
+
+  // Usa updateDoc se disponível, senão recria
+  if (window.fbUpdateDoc) {
+    window.fbUpdateDoc(window.fbDoc(window.fbDb, 'produtos', docId), { code, desc, cat })
+      .then(function() { overlay.style.display = 'none'; })
+      .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
+  } else {
+    // Fallback: delete e recria
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'produtos', docId))
+      .then(function() {
+        return window.fbAddDoc(window.fbCollection(window.fbDb, 'produtos'), { code, desc, cat });
+      })
+      .then(function() { overlay.style.display = 'none'; })
+      .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
+  }
 });
 
 // ─── FORM CLIENTE ────────────────────────────────
@@ -1123,7 +1348,7 @@ document.getElementById('save-prod-btn').addEventListener('click', function() {
   if (!desc) { alert('Preencha a descrição antes de salvar.'); return; }
   if (produtos.find(function(p){ return p.code === code; })) { alert('Já existe um produto com esse código.'); return; }
 
-  var cats = ['Computador','Notebook','Monitor','Periférico','Impressora','Software','Rede','Outro'];
+  var cats = ['Computador','Notebook','Monitor','Periférico','Impressora','Cartuchos','Peças','Software','Rede','Outro'];
   var cat = prompt('Categoria do produto:\n' + cats.map(function(c,i){ return (i+1)+'. '+c; }).join('\n') + '\n\nDigite o número ou o nome:');
   if (!cat) return;
   var catNum = parseInt(cat);
@@ -1369,8 +1594,192 @@ document.getElementById('btn-gerar-proposta').addEventListener('click', function
   });
 });
 
+// ─── COTAÇÕES ────────────────────────────────────
+
+var cotacoes = [];
+
+// Listener cotações em tempo real
+function initCotacoesListener() {
+  if (!window.fbDb) { setTimeout(initCotacoesListener, 100); return; }
+  window.fbOnSnapshot(window.fbCollection(window.fbDb, 'cotacoes'), function(snap) {
+    cotacoes = snap.docs.map(function(d) {
+      return Object.assign({ _docId: d.id }, d.data());
+    }).sort(function(a, b) { return (b.timestamp||0) - (a.timestamp||0); });
+    document.getElementById('cot-count').textContent = '(' + cotacoes.length + ')';
+    renderCotacoes();
+  });
+}
+window.addEventListener('firebase-ready', initCotacoesListener);
+if (window.fbReady) initCotacoesListener();
+
+// Mostra/esconde botão salvar cotação conforme há itens
+function updateSalvarBar() {
+  var bar = document.getElementById('salvar-cotacao-bar');
+  bar.style.display = items.length > 0 ? 'flex' : 'none';
+}
+
+// Render lista de cotações
+function renderCotacoes() {
+  var q = (document.getElementById('cot-search').value || '').toLowerCase();
+  var list = cotacoes.filter(function(c) {
+    return !q || (c.nome||'').toLowerCase().includes(q) || (c.cliente||'').toLowerCase().includes(q);
+  });
+  var grid = document.getElementById('cot-grid');
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="empty">💾 Nenhuma cotação salva ainda.</div>';
+    return;
+  }
+  grid.innerHTML = list.map(function(c) {
+    var data = c.data || '';
+    var itensHtml = (c.itens || []).map(function(it, i) {
+      return '<span style="font-size:11px;color:var(--text3)">' + (i+1) + '. ' + esc(it.desc) + ' × ' + it.qty + ' — ' + fmtBRL(it.venda) + '</span>';
+    }).join('<br>');
+    var total = (c.itens||[]).reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
+    return '<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh1);display:flex;flex-direction:column;gap:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:700;color:var(--text)">' + esc(c.nome||'Sem nome') + '</div>' +
+          '<div style="font-size:11.5px;color:var(--text3);margin-top:2px">' +
+            (c.cliente ? '👤 ' + esc(c.cliente) + ' &nbsp;·&nbsp; ' : '') +
+            '📅 ' + esc(data) +
+          '</div>' +
+        '</div>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--blue)">' + fmtBRL(total) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:3px">' + itensHtml + '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--navy)" data-cot-id="' + c._docId + '" data-cot-action="substituir">↩ Substituir atual</button>' +
+        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--blue-lt)||var(--blue);opacity:.85" data-cot-id="' + c._docId + '" data-cot-action="adicionar">＋ Adicionar aos itens</button>' +
+        '<button class="card-del" style="margin-left:auto" data-cot-id="' + c._docId + '" data-cot-action="excluir" title="Excluir">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Eventos cotações
+document.getElementById('cot-grid').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-cot-action]');
+  if (!btn) return;
+  var docId  = btn.getAttribute('data-cot-id');
+  var action = btn.getAttribute('data-cot-action');
+  var cot    = cotacoes.find(function(c){ return c._docId === docId; });
+  if (!cot) return;
+
+  if (action === 'excluir') {
+    if (!confirm('Excluir a cotação "' + cot.nome + '"?')) return;
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'cotacoes', docId))
+      .catch(function(e){ alert('Erro: ' + e.message); });
+    return;
+  }
+
+  if (action === 'substituir') {
+    items = (cot.itens || []).map(function(it, i) {
+      return Object.assign({ id: nextId++ }, it);
+    });
+    // Restaura modo de cálculo
+    if (cot.modeTc !== undefined) {
+      modeTc = cot.modeTc;
+      document.getElementById('chip-tc').classList.toggle('on', modeTc);
+      document.getElementById('ctrl-boleto').style.display = modeTc ? '' : 'none';
+    }
+    if (cot.modeVd !== undefined) {
+      modeVd = cot.modeVd;
+      document.getElementById('chip-vd').classList.toggle('on', modeVd);
+      document.getElementById('ctrl-vd').style.display = modeVd ? '' : 'none';
+    }
+    if (cot.boletos !== undefined) {
+      document.getElementById('n-boletos').value = cot.boletos;
+      var n = parseInt(cot.boletos) || 0;
+      var lbl = document.getElementById('boleto-label');
+      lbl.innerHTML = n === 0
+        ? '<span style="color:var(--ok);font-weight:600">✓ PIX — sem custo de boleto</span>'
+        : '× R$ 4,50 = <strong>R$ ' + fmt(n*4.5) + '</strong>';
+    }
+  }
+
+  if (action === 'adicionar') {
+    (cot.itens || []).forEach(function(it) {
+      items.push(Object.assign({ id: nextId++ }, it));
+    });
+  }
+
+  render();
+  updateSalvarBar();
+  // Vai para aba formação de preços
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelector('[data-page="calc"]').classList.add('active');
+  document.getElementById('page-calc').classList.add('active');
+});
+
+// Abrir modal salvar cotação
+document.getElementById('btn-salvar-cotacao').addEventListener('click', function() {
+  // Popula select de clientes
+  var sel = document.getElementById('cot-cliente');
+  sel.innerHTML = '<option value="">Sem cliente associado</option>';
+  clientes.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.nome;
+    opt.textContent = c.nome;
+    sel.appendChild(opt);
+  });
+  // Resumo
+  var total = items.reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
+  document.getElementById('cot-resumo').textContent =
+    items.length + ' item(ns) · Total: ' + fmtBRL(total);
+  document.getElementById('cot-nome').value = '';
+  document.getElementById('cot-modal').style.display = 'flex';
+  document.getElementById('cot-nome').focus();
+});
+
+document.getElementById('cancel-cot-modal').addEventListener('click', function() {
+  document.getElementById('cot-modal').style.display = 'none';
+});
+document.getElementById('cot-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+document.getElementById('confirm-cot-modal').addEventListener('click', function() {
+  var nome    = document.getElementById('cot-nome').value.trim();
+  var cliente = document.getElementById('cot-cliente').value;
+  if (!nome) { alert('Digite um nome para a cotação.'); return; }
+
+  var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  var hoje  = new Date();
+  var dataStr = hoje.getDate() + '/' + meses[hoje.getMonth()] + '/' + hoje.getFullYear();
+
+  var payload = {
+    nome:      nome,
+    cliente:   cliente,
+    data:      dataStr,
+    timestamp: Date.now(),
+    modeTc:    modeTc,
+    modeVd:    modeVd,
+    boletos:   parseInt(document.getElementById('n-boletos').value) || 0,
+    itens:     items.map(function(it) {
+      return { code: it.code, qty: it.qty, desc: it.desc, descSub: it.descSub||'', compra: it.compra, venda: it.venda, comissao: it.comissao||0 };
+    })
+  };
+
+  window.fbAddDoc(window.fbCollection(window.fbDb, 'cotacoes'), payload)
+    .then(function() {
+      document.getElementById('cot-modal').style.display = 'none';
+      // Feedback
+      var btn = document.getElementById('btn-salvar-cotacao');
+      var orig = btn.innerHTML;
+      btn.innerHTML = '✓ Salvo!';
+      setTimeout(function(){ btn.innerHTML = orig; }, 1800);
+    })
+    .catch(function(e){ alert('Erro ao salvar: ' + e.message); });
+});
+
 // ─── INIT ────────────────────────────────────────
 render();
+updateSalvarBar();
+
+// Atualiza barra salvar sempre que tabela mudar
+var _renderOrig = render;
+render = function() { _renderOrig(); updateSalvarBar(); };
 </script>
 </body>
 </html>
