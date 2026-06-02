@@ -170,8 +170,11 @@ tbody tr:hover td{background:var(--accent-bg)}
 .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 
 /* PAGE */
-.page{display:none;flex:1;flex-direction:column}
-.page.active{display:flex}
+.page{display:none;flex:1;flex-direction:column;pointer-events:none}
+.page.active{display:flex;pointer-events:all}
+
+/* BOTTOM NAV — oculto por padrão, aparece só no mobile via media query */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.08);z-index:300;padding-bottom:env(safe-area-inset-bottom)}
 
 /* CADASTRO */
 .cad-wrap{padding:20px 24px;display:flex;flex-direction:column;gap:16px;max-width:1500px;width:100%;margin:0 auto}
@@ -230,18 +233,8 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   /* TABS — esconde no mobile, usa bottom nav */
   .tabs{display:none}
 
-  /* BOTTOM NAV */
-  .bottom-nav{
-    display:flex;
-    position:fixed;
-    bottom:0;left:0;right:0;
-    height:64px;
-    background:var(--surface);
-    border-top:1px solid var(--border);
-    box-shadow:0 -2px 12px rgba(0,0,0,.08);
-    z-index:300;
-    padding-bottom:env(safe-area-inset-bottom);
-  }
+  /* BOTTOM NAV — aparece no mobile */
+  .bottom-nav{display:flex}
   .bn-item{
     flex:1;
     display:flex;
