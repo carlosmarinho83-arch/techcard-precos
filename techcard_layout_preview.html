@@ -251,13 +251,18 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   .btn-add{padding:11px 16px;font-size:13px}
   .add-btn{padding:11px 16px;font-size:13px;width:100%;justify-content:center}
 
-  /* TABELA — scroll horizontal */
+  /* TABELA — scroll horizontal (apenas tabela de itens da calculadora) */
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table{min-width:500px;font-size:12px}
-  thead th{padding:8px 10px;font-size:9px}
-  td{padding:9px 10px}
+  .tbl-wrap table{min-width:500px;font-size:12px}
+  .tbl-wrap thead th{padding:8px 10px;font-size:9px}
+  .tbl-wrap td{padding:9px 10px}
   .inline-qty{width:40px !important}
   .inline-money{width:90px !important;font-size:11px !important}
+
+  /* TABELA PRODUTOS — sem min-width, sem padding extra */
+  .cad-list{overflow:visible}
+  .cad-list table{min-width:unset;font-size:13px}
+  .cad-list td{padding:0;border:none}
 
   /* TOTAIS */
   .totals{flex-direction:column;gap:12px;padding:12px 14px}
@@ -269,13 +274,6 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   .cad-header > div:last-child{width:100%}
   .search-input{width:100%}
   .cad-form{padding:12px}
-
-  /* TABELA PRODUTOS — layout mobile limpo */
-  .cad-list thead{display:none}
-  .cad-list tr{display:block;padding:10px 14px;border-bottom:1px solid var(--border)}
-  .cad-list tr:last-child{border-bottom:none}
-  .cad-list td{display:block;padding:2px 0;border:none}
-  .cad-list td.td-tight{width:auto}
 
   /* CLIENTES cards — 1 coluna */
   .cli-cards-grid{grid-template-columns:1fr}
