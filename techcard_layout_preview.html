@@ -160,6 +160,9 @@ tbody tr:hover td{background:var(--accent-bg)}
 .tot-val.err{color:var(--err)}
 .tot-sep{width:1px;height:34px;background:var(--border);align-self:center}
 
+/* MOBILE CARDS — oculto no desktop */
+#mobile-items{display:none}
+
 /* EMPTY */
 .empty{padding:40px 20px;text-align:center;color:var(--text3);font-size:13px}
 
@@ -170,8 +173,8 @@ tbody tr:hover td{background:var(--accent-bg)}
 .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 
 /* PAGE */
-.page{display:none;flex:1;flex-direction:column;pointer-events:none}
-.page.active{display:flex;pointer-events:all}
+.page{display:none;flex:1;flex-direction:column}
+.page.active{display:flex}
 
 /* BOTTOM NAV — oculto por padrão, aparece só no mobile via media query */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.08);z-index:300;padding-bottom:env(safe-area-inset-bottom)}
@@ -352,9 +355,9 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   .lucro-badge-err{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:5px;background:var(--err-bg);color:var(--err);border:1px solid rgba(224,48,80,.2)}
   .lucro-pct{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 
-  /* Esconde tabela desktop no mobile */
-  .tbl-wrap{display:none}
-  #mobile-items{display:block}
+  /* Esconde tabela desktop, mostra cards mobile */
+  .tbl-wrap{display:none !important}
+  #mobile-items{display:block !important}
   .cli-cards-grid{grid-template-columns:1fr}
 
   /* PROPOSTA */
@@ -525,7 +528,7 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   </div>
 
   <!-- CARDS MOBILE -->
-  <div id="mobile-items" style="display:none"></div>
+  <div id="mobile-items"></div>
 
   <!-- TOTAIS -->
   <div class="totals" id="totals" style="display:none"></div>
