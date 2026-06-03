@@ -475,8 +475,8 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
     <div class="ctrl" id="ctrl-vd" style="display:none">
       <div class="ctrl-lbl">Modo — Venda Direta</div>
       <div class="subchips">
-        <div class="subchip on" id="sub-calc">📊 Calculado (~73%)</div>
-        <div class="subchip" id="sub-site">🌐 Via Site do Fornecedor</div>
+        <div class="subchip on" id="sub-calc">📊 Calculado (73%)</div>
+        <div class="subchip" id="sub-site">🌐 Via Site</div>
       </div>
     </div>
 
@@ -1157,7 +1157,7 @@ function updatePreview() {
   if (modeVd) {
     var r2 = calcVD(compra, venda, qty, comissao);
     var cls2 = r2.lucro >= 0 ? 'pos' : 'neg';
-    var modoStr = vdMode === 'site' ? 'Via Site do Fornecedor' : 'Calculado (~73%)';
+    var modoStr = vdMode === 'site' ? 'Via Site' : 'Calculado (73%)';
     html += '<div class="prev-block">';
     html += '<div class="prev-title vd">🔗 Venda Direta — ' + modoStr + '</div>';
     if (vdMode === 'site' && comissao === 0) {
