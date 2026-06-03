@@ -505,7 +505,7 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
             </button>
           </div>
         </div>
-        <div>
+        <div id="f-compra-col">
           <div class="flabel">Valor de Compra</div>
           <div class="pfx-wrap"><span class="pfx">R$</span><input type="text" id="f-compra" placeholder="0,00"></div>
         </div>
@@ -514,7 +514,7 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
           <div class="pfx-wrap"><span class="pfx">R$</span><input type="text" id="f-venda" placeholder="0,00"></div>
         </div>
         <div id="f-comissao-col" style="display:none">
-          <div class="flabel">Comissão (site)</div>
+          <div class="flabel">Comissão (informada pelo site)</div>
           <div class="pfx-wrap"><span class="pfx">R$</span><input type="text" id="f-comissao" placeholder="0,00"></div>
         </div>
       </div>
@@ -1157,11 +1157,15 @@ function updatePreview() {
   if (modeVd) {
     var r2 = calcVD(compra, venda, qty, comissao);
     var cls2 = r2.lucro >= 0 ? 'pos' : 'neg';
-    var modoStr = vdMode === 'site' ? 'Via Site' : '~73%';
+    var modoStr = vdMode === 'site' ? 'Via Site do Fornecedor' : 'Calculado (~73%)';
     html += '<div class="prev-block">';
-    html += '<div class="prev-title vd">🔗 Venda Direta (' + modoStr + ')</div>';
-    html += '<div class="prev-detail">Comissão: R$ ' + fmt(r2.comissao) + ' &nbsp;|&nbsp; ISS 6%: R$ ' + fmt(r2.iss) + '</div>';
-    html += '<div class="prev-lucro ' + cls2 + '">Lucro: R$ ' + fmt(r2.lucro) + ' (' + r2.margem.toFixed(1) + '%)</div>';
+    html += '<div class="prev-title vd">🔗 Venda Direta — ' + modoStr + '</div>';
+    if (vdMode === 'site' && comissao === 0) {
+      html += '<div class="prev-detail" style="color:var(--warn,#d97706)">⚠️ Informe a comissão do site para calcular</div>';
+    } else {
+      html += '<div class="prev-detail">Comissão: R$ ' + fmt(r2.comissao) + ' &nbsp;|&nbsp; ISS 6%: – R$ ' + fmt(r2.iss) + '</div>';
+      html += '<div class="prev-lucro ' + cls2 + '">Lucro: R$ ' + fmt(r2.lucro) + ' (' + r2.margem.toFixed(1) + '%)</div>';
+    }
     html += '</div>';
   }
 
@@ -1347,10 +1351,19 @@ document.getElementById('tbody').addEventListener('input', function(e) {
 // ─── FORM HELPERS ────────────────────────────────
 function updateFormCols() {
   var showComissao = modeVd && vdMode === 'site';
+  var showCompra   = !(modeVd && vdMode === 'site' && !modeTc);
+  // No modo Site-only (sem Techcard): esconde compra, mostra comissão
+  // Se Techcard também está ativo: mantém compra (necessária para calcTC)
   document.getElementById('f-comissao-col').style.display = showComissao ? '' : 'none';
-  var cols = showComissao
-    ? '110px 55px 1fr 140px 140px 140px'
-    : '110px 55px 1fr 140px 140px';
+  document.getElementById('f-compra-col').style.display   = showCompra   ? '' : 'none';
+  var cols;
+  if (showComissao && !showCompra) {
+    cols = '110px 55px 1fr 140px 140px'; // sem compra, com comissão
+  } else if (showComissao) {
+    cols = '110px 55px 1fr 140px 140px 140px'; // com compra e comissão
+  } else {
+    cols = '110px 55px 1fr 140px 140px'; // padrão
+  }
   document.getElementById('frow').style.gridTemplateColumns = cols;
 }
 
