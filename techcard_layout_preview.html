@@ -295,16 +295,20 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   .cad-wrap{padding:12px;gap:12px;padding-bottom:84px !important}
 
   /* CONTAINER */
-  .wrap,.cad-wrap{padding:12px;gap:12px}
+  .wrap{padding:12px;gap:12px;padding-bottom:84px !important}
+  .cad-wrap{padding:12px;gap:12px;padding-bottom:84px !important}
 
-  /* CONTROLES — empilha verticalmente */
+  /* CONTROLES */
   .controls{flex-direction:column;gap:10px}
   .ctrl{padding:12px 14px}
-  .chips{flex-wrap:wrap;gap:8px}
-  .chip{font-size:12px;padding:8px 12px}
-  .subchips{flex-wrap:wrap}
   .boleto-row{flex-wrap:wrap;gap:8px}
   .boleto-row span{font-size:12px}
+
+  /* CHIPS — lado a lado, mesma altura */
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .chip{justify-content:center;min-height:48px;font-size:13px;padding:10px 8px}
+  .subchips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .subchip{text-align:center;justify-content:center;min-height:48px;white-space:normal;padding:10px 8px;font-size:12.5px}
 
   /* FORMULÁRIO ADICIONAR ITEM */
   .frow{grid-template-columns:1fr !important}
