@@ -1975,44 +1975,71 @@ function renderCotacoes() {
     return;
   }
   grid.innerHTML = list.map(function(c) {
-    var data = c.data || '';
-    // Garante formato DD/MM/AA
+    var data  = c.data || '';
+    var total = (c.itens||[]).reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
+    var docId = c._docId;
+
     var itensHtml = (c.itens || []).map(function(it, i) {
-      return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">' +
+      return '<div style="padding:5px 0;border-bottom:1px solid var(--border);last-child:border:none">' +
         '<div style="font-size:12.5px;color:var(--text2)">' + (i+1) + '. ' + esc(it.desc) + '</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">' +
+        '<div style="display:flex;justify-content:space-between;margin-top:2px">' +
           '<span style="font-size:11.5px;color:var(--text3)">× ' + it.qty + '</span>' +
           '<span style="font-size:12px;font-family:\'JetBrains Mono\',monospace;color:var(--text2)">' + fmtBRL(it.venda) + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
-    var total = (c.itens||[]).reduce(function(s,it){ return s + it.venda*it.qty; }, 0);
-    return '<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh1);display:flex;flex-direction:column;gap:10px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
-        '<div>' +
-          '<div style="font-size:14px;font-weight:700;color:var(--text)">' + esc(c.nome||'Sem nome') + '</div>' +
+
+    return '<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh1)">' +
+
+      // ── Cabeçalho sempre visível ──────────────────────────
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;gap:10px;cursor:pointer" data-cot-action="toggle" data-cot-id="' + docId + '">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.nome||'Sem nome') + '</div>' +
           '<div style="font-size:11.5px;color:var(--text3);margin-top:2px">' +
-            (c.cliente ? '👤 ' + esc(c.cliente) + ' · ' : '') +
-            esc(data) +
+            (c.cliente ? esc(c.cliente) + ' · ' : '') + esc(data) +
           '</div>' +
         '</div>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--blue)">' + fmtBRL(total) + '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">' +
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;font-weight:700;color:var(--blue)">' + fmtBRL(total) + '</span>' +
+          '<span style="font-size:18px;color:var(--text3);transition:transform .2s" id="arr-' + docId + '">›</span>' +
+        '</div>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:3px">' + itensHtml + '</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--navy)" data-cot-id="' + c._docId + '" data-cot-action="substituir">↩ Substituir atual</button>' +
-        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--blue-lt)||var(--blue);opacity:.85" data-cot-id="' + c._docId + '" data-cot-action="adicionar">＋ Adicionar aos itens</button>' +
-        '<button class="btn-ok" style="font-size:12px;padding:7px 14px;background:var(--warn,#d97706)" data-cot-id="' + c._docId + '" data-cot-action="editar">✏️ Editar</button>' +
-        '<button class="card-del" style="margin-left:auto" data-cot-id="' + c._docId + '" data-cot-action="excluir" title="Excluir">✕</button>' +
+
+      // ── Conteúdo expandido (oculto por padrão) ────────────
+      '<div id="body-' + docId + '" style="display:none;border-top:1px solid var(--border)">' +
+        '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:4px">' + itensHtml + '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;border-top:1px solid var(--border)">' +
+          '<button class="btn-ok" style="font-size:12px;padding:10px 8px;background:var(--navy);justify-content:center;display:flex;align-items:center;gap:5px" data-cot-id="' + docId + '" data-cot-action="substituir">↩ Substituir atual</button>' +
+          '<button class="btn-ok" style="font-size:12px;padding:10px 8px;background:var(--warn,#d97706);justify-content:center;display:flex;align-items:center;gap:5px" data-cot-id="' + docId + '" data-cot-action="editar">✏️ Editar</button>' +
+          '<button class="btn-ok" style="font-size:12px;padding:10px 8px;background:var(--blue);opacity:.85;justify-content:center;display:flex;align-items:center;gap:5px" data-cot-id="' + docId + '" data-cot-action="adicionar">＋ Adicionar</button>' +
+          '<button class="btn-ok" style="font-size:12px;padding:10px 8px;background:var(--err);justify-content:center;display:flex;align-items:center;gap:5px" data-cot-id="' + docId + '" data-cot-action="excluir">✕ Excluir</button>' +
+        '</div>' +
       '</div>' +
+
     '</div>';
   }).join('');
 }
 
-// Eventos cotações
+// Toggle accordion cotação
+document.getElementById('cot-grid').addEventListener('click', function(e) {
+  var toggleEl = e.target.closest('[data-cot-action="toggle"]');
+  if (toggleEl) {
+    var docId = toggleEl.getAttribute('data-cot-id');
+    var body  = document.getElementById('body-' + docId);
+    var arr   = document.getElementById('arr-' + docId);
+    if (!body) return;
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+  }
+});
+
+// Eventos cotações (ações — toggle é tratado separado acima)
 document.getElementById('cot-grid').addEventListener('click', function(e) {
   var btn = e.target.closest('[data-cot-action]');
   if (!btn) return;
+  var action = btn.getAttribute('data-cot-action');
+  if (action === 'toggle') return; // já tratado acima
   var docId  = btn.getAttribute('data-cot-id');
   var action = btn.getAttribute('data-cot-action');
   var cot    = cotacoes.find(function(c){ return c._docId === docId; });
