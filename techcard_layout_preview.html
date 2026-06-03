@@ -825,6 +825,25 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
     <!-- Cards de clientes -->
     <div class="cli-cards-grid" id="cli-grid"></div>
 
+    <!-- Modal editar cliente -->
+    <div id="cli-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:16px">
+      <div style="background:var(--surface);border-radius:var(--r);padding:22px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh)">
+        <div style="font-size:15px;font-weight:700;color:var(--text)">✏️ Editar Cliente</div>
+        <div>
+          <div class="flabel">Razão Social / Nome</div>
+          <input type="text" id="ce-nome" placeholder="Ex: Q3 Fase 1 SPE">
+        </div>
+        <div>
+          <div class="flabel">Nome do Contato</div>
+          <input type="text" id="ce-contato" placeholder="Ex: Sr. Werliton Venturini">
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" id="cancel-cli-edit">Cancelar</button>
+          <button class="btn-ok" id="confirm-cli-edit">✓ Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div><!-- /page-clientes -->
 
@@ -1482,8 +1501,11 @@ function renderClientes() {
   }
   grid.innerHTML = list.map(function(c) {
     return '<div class="cli-card">' +
-      '<button class="cli-card-del" data-doc-id="' + c._docId + '" data-tipo="cliente">✕</button>' +
-      '<div class="cli-card-nome">' + esc(c.nome||'') + '</div>' +
+      '<div style="position:absolute;top:10px;right:10px;display:flex;gap:5px">' +
+        '<button class="card-del" style="width:24px;height:24px;background:var(--accent-bg);color:var(--blue);border-color:rgba(37,99,200,.2)" data-doc-id="' + c._docId + '" data-tipo="edit-cliente" title="Editar">✎</button>' +
+        '<button class="cli-card-del" data-doc-id="' + c._docId + '" data-tipo="cliente" title="Excluir">✕</button>' +
+      '</div>' +
+      '<div class="cli-card-nome" style="padding-right:56px">' + esc(c.nome||'') + '</div>' +
       (c.contato ? '<div class="cli-card-contato">' + esc(c.contato) + '</div>' : '') +
     '</div>';
   }).join('');
@@ -1611,14 +1633,49 @@ document.getElementById('confirm-cli').addEventListener('click', function() {
     .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
 });
 
-// Excluir cliente
+// Editar/Excluir cliente
 document.getElementById('cli-grid').addEventListener('click', function(e) {
-  var btn = e.target.closest('[data-tipo="cliente"]');
+  var btn = e.target.closest('[data-tipo]');
   if (!btn) return;
-  var id = btn.getAttribute('data-doc-id');
-  if (!confirm('Remover este cliente?')) return;
-  window.fbDeleteDoc(window.fbDoc(window.fbDb, 'clientes', id))
-    .catch(function(e) { alert('Erro ao remover: ' + e.message); });
+  var docId = btn.getAttribute('data-doc-id');
+  var tipo  = btn.getAttribute('data-tipo');
+
+  if (tipo === 'cliente') {
+    if (!confirm('Remover este cliente?')) return;
+    window.fbDeleteDoc(window.fbDoc(window.fbDb, 'clientes', docId))
+      .catch(function(e){ alert('Erro ao remover: ' + e.message); });
+  }
+
+  if (tipo === 'edit-cliente') {
+    var cli = clientes.find(function(c){ return c._docId === docId; });
+    if (!cli) return;
+    document.getElementById('ce-nome').value    = cli.nome    || '';
+    document.getElementById('ce-contato').value = cli.contato || '';
+    var overlay = document.getElementById('cli-edit-overlay');
+    overlay.style.display = 'flex';
+    overlay._docId = docId;
+  }
+});
+
+// Fechar modal editar cliente
+document.getElementById('cancel-cli-edit').addEventListener('click', function() {
+  document.getElementById('cli-edit-overlay').style.display = 'none';
+});
+document.getElementById('cli-edit-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// Salvar edição cliente
+document.getElementById('confirm-cli-edit').addEventListener('click', function() {
+  var overlay = document.getElementById('cli-edit-overlay');
+  var docId   = overlay._docId;
+  var nome    = document.getElementById('ce-nome').value.trim();
+  var contato = document.getElementById('ce-contato').value.trim();
+  if (!nome) { alert('Informe o nome ou razão social.'); return; }
+
+  window.fbUpdateDoc(window.fbDoc(window.fbDb, 'clientes', docId), { nome: nome, contato: contato })
+    .then(function() { overlay.style.display = 'none'; })
+    .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
 });
 
 // Salvar produto rápido (botão inline na calculadora)
