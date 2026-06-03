@@ -291,7 +291,8 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
 
   /* Empurra conteúdo para cima */
   body{padding-bottom:80px !important}
-  .wrap,.cad-wrap{padding-bottom:16px}
+  .wrap{padding-bottom:16px}
+  .cad-wrap{padding:12px;gap:12px;padding-bottom:84px !important}
 
   /* CONTAINER */
   .wrap,.cad-wrap{padding:12px;gap:12px}
@@ -363,6 +364,11 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,200,.1)}
   /* PROPOSTA */
   .prop-conds .frow{grid-template-columns:1fr 1fr !important}
   #pi-produtos-check{max-height:160px}
+
+  /* Produtos — esconde cabeçalho no mobile */
+  .cad-list thead{display:none}
+  .cad-list table{min-width:unset !important}
+  .cad-list td{border-bottom:none}
 
   /* INPUTS — maiores para touch */
   input[type="text"],input[type="number"],select{
