@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#152B45"/>
+      <stop offset="100%" style="stop-color:#1C3F6E"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563c8"/>
+      <stop offset="100%" style="stop-color:#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <!-- Fundo -->
+  <rect width="512" height="512" rx="0" fill="url(#bg)"/>
+  <!-- Círculo de fundo do R$ -->
+  <circle cx="220" cy="230" r="140" fill="rgba(37,99,200,0.12)" stroke="rgba(96,165,250,0.2)" stroke-width="2"/>
+  <!-- R$ grande -->
+  <text x="220" y="278" font-family="Arial,sans-serif" font-size="160" font-weight="900" fill="#ffffff" text-anchor="middle" opacity="0.95">R$</text>
+  <!-- Seta diagonal subindo -->
+  <polygon points="300,240 400,240 400,140" fill="url(#arrow)" opacity="0.9"/>
+  <polygon points="385,140 430,140 430,185" fill="#60a5fa"/>
+  <line x1="310" y1="230" x2="425" y2="145" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="426" cy="146" r="8" fill="#ffffff"/>
+  <!-- Linha base -->
+  <rect x="80" y="370" width="352" height="4" rx="2" fill="rgba(96,165,250,0.3)"/>
+  <!-- Texto PREÇO -->
+  <text x="256" y="440" font-family="Arial,sans-serif" font-size="44" font-weight="700" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="8">PREÇO</text>
+</svg>

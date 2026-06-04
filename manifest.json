@@ -1,0 +1,19 @@
+{
+  "name": "Techcard – Formação de Preços",
+  "short_name": "TC Preços",
+  "description": "Formação de Preços – Techcard Informática",
+  "start_url": "/techcard-precos/techcard_layout_preview.html",
+  "scope": "/techcard-precos/",
+  "display": "standalone",
+  "background_color": "#152B45",
+  "theme_color": "#152B45",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
