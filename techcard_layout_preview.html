@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Techcard – Formação de Preços</title>
+
+<!-- PWA Meta Tags -->
+<meta name="application-name" content="Techcard Preços">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TC Preços">
+<meta name="theme-color" content="#152B45">
+<meta name="description" content="Formação de Preços – Techcard Informática">
+
+<!-- Ícone PWA via SVG inline como data URI -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23152B45'/%3E%3Cstop offset='100%25' style='stop-color:%231C3F6E'/%3E%3C/linearGradient%3E%3ClinearGradient id='arrow' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%232563c8'/%3E%3Cstop offset='100%25' style='stop-color:%2360a5fa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='110' fill='url(%23bg)'/%3E%3Ccircle cx='220' cy='230' r='140' fill='rgba(37,99,200,0.12)' stroke='rgba(96,165,250,0.2)' stroke-width='2'/%3E%3Ctext x='220' y='278' font-family='Arial,sans-serif' font-size='160' font-weight='900' fill='%23ffffff' text-anchor='middle'%3ER%24%3C/text%3E%3Cpolygon points='300,240 400,240 400,140' fill='url(%23arrow)' opacity='0.9'/%3E%3Cpolygon points='385,140 430,140 430,185' fill='%2360a5fa'/%3E%3Cline x1='310' y1='230' x2='425' y2='145' stroke='%23ffffff' stroke-width='8' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='426' cy='146' r='8' fill='%23ffffff'/%3E%3Crect x='80' y='370' width='352' height='4' rx='2' fill='rgba(96,165,250,0.3)'/%3E%3Ctext x='256' y='440' font-family='Arial,sans-serif' font-size='44' font-weight='700' fill='rgba(255,255,255,0.4)' text-anchor='middle' letter-spacing='8'%3EPRE%C3%87O%3C/text%3E%3C/svg%3E">
+
+<!-- Apple Touch Icon (iOS adicionar à tela inicial) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23152B45'/%3E%3Cstop offset='100%25' style='stop-color:%231C3F6E'/%3E%3C/linearGradient%3E%3ClinearGradient id='arrow' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%232563c8'/%3E%3Cstop offset='100%25' style='stop-color:%2360a5fa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='110' fill='url(%23bg)'/%3E%3Ccircle cx='220' cy='230' r='140' fill='rgba(37,99,200,0.12)' stroke='rgba(96,165,250,0.2)' stroke-width='2'/%3E%3Ctext x='220' y='278' font-family='Arial,sans-serif' font-size='160' font-weight='900' fill='%23ffffff' text-anchor='middle'%3ER%24%3C/text%3E%3Cpolygon points='300,240 400,240 400,140' fill='url(%23arrow)' opacity='0.9'/%3E%3Cpolygon points='385,140 430,140 430,185' fill='%2360a5fa'/%3E%3Cline x1='310' y1='230' x2='425' y2='145' stroke='%23ffffff' stroke-width='8' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='426' cy='146' r='8' fill='%23ffffff'/%3E%3Crect x='80' y='370' width='352' height='4' rx='2' fill='rgba(96,165,250,0.3)'/%3E%3Ctext x='256' y='440' font-family='Arial,sans-serif' font-size='44' font-weight='700' fill='rgba(255,255,255,0.4)' text-anchor='middle' letter-spacing='8'%3EPRE%C3%87O%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
 <script type="module">
